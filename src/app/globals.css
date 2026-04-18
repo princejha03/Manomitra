@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #6C63FF;
+  --color-secondary: #48CAE4;
+  --color-accent: #95D5B2;
+  --color-warning: #FFB347;
+  --color-dark-bg: #0D1117;
+  --color-light-bg: #F8F9FA;
+  --color-card-dark: #161B22;
+  --color-card-light: #FFFFFF;
+
+  --color-happy: #FFD700;
+  --color-sad: #6495ED;
+  --color-angry: #FF6B6B;
+  --color-anxious: #FFA07A;
+  --color-calm: #98FB98;
+  --color-neutral: #C0C0C0;
+
+  --font-poppins: "Poppins", sans-serif;
+  --font-nunito: "Nunito", sans-serif;
+  --font-playfair: "Playfair Display", serif;
+  --font-inter: "Inter", sans-serif;
+}
+
+:root {
+  --background: #F8F9FA;
+  --foreground: #0D1117;
+  --card: #FFFFFF;
+}
+
+.dark {
+  --background: #0D1117;
+  --foreground: #F8F9FA;
+  --card: #161B22;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-nunito);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-poppins);
+}
+
+.quote {
+  font-family: var(--font-playfair);
+  font-style: italic;
+}
+
+.label {
+  font-family: var(--font-inter);
+  font-weight: 500;
+}
+
+/* Glassmorphism utility */
+.glass {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.dark .glass {
+  background: rgba(22, 27, 34, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Animations */
+@keyframes breathing {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.animate-breathing {
+  animation: breathing 4s ease-in-out infinite;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(108, 99, 255, 0.2);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(108, 99, 255, 0.4);
+}
