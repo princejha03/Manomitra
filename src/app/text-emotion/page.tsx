@@ -24,7 +24,6 @@ import {
   Cell
 } from "recharts";
 import { useRouter } from "next/navigation";
-import { mapToInternalEmotion } from "@/lib/utils";
 
 const emotionColors: Record<string, string> = {
   joy: "#FFD700",
@@ -51,7 +50,6 @@ export default function TextEmotionModule() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [results, setResults] = useState<any>(null);
   const [gravityResults, setGravityResults] = useState<any>(null);
-  const [error, setError] = useState<string | null>(null);
   const { setCurrentEmotion, addEmotionToHistory } = useStore();
   const router = useRouter();
 
@@ -59,14 +57,13 @@ export default function TextEmotionModule() {
     if (!text.trim() || isAnalyzing) return;
     
     setIsAnalyzing(true);
-    setError(null);
     try {
       const [hfResult, gravityResult] = await Promise.all([
         analyzeTextEmotion(text),
         analyzeTextGravity(text)
       ]);
 
-      if (hfResult && Array.isArray(hfResult)) {
+      if (hfResult) {
         setResults(hfResult);
         setGravityResults(gravityResult);
 
@@ -75,24 +72,19 @@ export default function TextEmotionModule() {
           prev.score > current.score ? prev : current
         );
 
-        const internalDominant = mapToInternalEmotion(dominant.label);
-
         const emotionProfile = {
-          dominantEmotion: internalDominant,
+          dominantEmotion: dominant.label.charAt(0).toUpperCase() + dominant.label.slice(1),
           intensity: Math.round(dominant.score * 100),
           wellbeingIndex: gravityResult?.wellbeing_score || 70,
-          scores: hfResult.reduce((acc: any, curr: any) => ({ ...acc, [mapToInternalEmotion(curr.label)]: curr.score }), {}),
+          scores: hfResult.reduce((acc: any, curr: any) => ({ ...acc, [curr.label]: curr.score }), {}),
           timestamp: Date.now(),
         };
 
         setCurrentEmotion(emotionProfile);
         addEmotionToHistory(emotionProfile);
-      } else {
-        setError("Could not analyze text. Please try again with different words.");
       }
-    } catch (err) {
-      console.error(err);
-      setError("An unexpected error occurred. Please try again later.");
+    } catch (error) {
+      console.error(error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -143,11 +135,6 @@ export default function TextEmotionModule() {
                 )}
               </button>
             </div>
-            {error && (
-              <div className="mt-4 p-4 bg-red-500/10 text-red-400 rounded-xl flex items-center gap-2 text-sm border border-red-500/20">
-                <Brain size={16} /> {error}
-              </div>
-            )}
           </Card>
 
           {/* Results Section */}
@@ -159,7 +146,7 @@ export default function TextEmotionModule() {
                 exit={{ opacity: 0, scale: 0.95 }}
                 className="space-y-6"
               >
-                <Card className="text-center p-8 bg-gradient-to-br from-primary/10 to-secondary/10 border-white/10">
+                <Card className="text-center p-8 bg-linear-to-br from-primary/10 to-secondary/10 border-white/10">
                   <div className="text-7xl mb-4">
                     {emotionEmojis[results[0].label] || "😐"}
                   </div>
@@ -191,7 +178,7 @@ export default function TextEmotionModule() {
                     <TrendingUp size={20} className="text-primary" />
                     Emotion Breakdown
                   </h4>
-                  <div className="h-[250px] w-full">
+                  <div className="h-62.5 w-full">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={results} layout="vertical">
                         <XAxis type="number" hide />

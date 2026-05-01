@@ -149,7 +149,7 @@ export default function FeedbackPage() {
                       </button>
                     ))}
                   </div>
-                  <p className="text-sm font-bold text-primary animate-pulse min-h-[20px]">
+                  <p className="text-sm font-bold text-primary animate-pulse min-h-5">
                     {rating > 0 ? ratingMessages[rating] : ""}
                   </p>
                 </Card>

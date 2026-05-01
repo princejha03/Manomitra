@@ -77,7 +77,7 @@ export default function WelcomeBreathing() {
         <p className="text-xl font-playfair italic text-foreground/60 mb-12">"{quote}"</p>
 
         {/* Breathing Circle */}
-        <div className="relative flex flex-col items-center justify-center h-[400px]">
+        <div className="relative flex flex-col items-center justify-center h-100">
           <motion.div
             variants={circleVariants}
             animate={phase}
@@ -106,14 +106,14 @@ export default function WelcomeBreathing() {
             <motion.button
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/text-emotion")}
               className="flex items-center gap-2 px-8 py-4 bg-primary text-white rounded-2xl font-bold text-lg hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all"
             >
               I'm Ready <Play size={20} fill="currentColor" />
             </motion.button>
           ) : (
             <button
-              onClick={() => router.push("/dashboard")}
+              onClick={() => router.push("/text-emotion")}
               className="flex items-center gap-2 text-foreground/40 font-medium hover:text-foreground transition-colors"
             >
               Skip <SkipForward size={20} />
