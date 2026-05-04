@@ -161,9 +161,10 @@ export async function analyzeVoiceGravity(features: any) {
       return {
         dominant_emotion: "calm",
         confidence: 0.8,
-        stress_score: 25,
+        stress_score: 22,
         energy_level: 65,
         wellbeing_index: 78,
+        vocal_patterns: ["Steady", "Warm", "Balanced"],
         voice_features: {
           pitch_variation: 0.6,
           speech_rate: 0.7,
@@ -195,6 +196,10 @@ export async function analyzeVoiceGravity(features: any) {
     return {
       dominant_emotion: "neutral",
       confidence: 0.6,
+      stress_score: 40,
+      energy_level: 55,
+      wellbeing_index: 72,
+      vocal_patterns: ["Measured", "Balanced"],
       voice_features: {
         pitch_variation: 0.5,
         speech_rate: 0.6,

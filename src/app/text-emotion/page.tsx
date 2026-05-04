@@ -8,20 +8,15 @@ import Card from "@/components/ui/Card";
 import { useStore } from "@/store/useStore";
 import { analyzeTextEmotion } from "@/lib/huggingface";
 import { analyzeTextGravity } from "@/lib/gravityai";
-import { 
-  Loader2, 
-  Zap, 
-  HelpCircle,
-  TrendingUp,
-  Brain
-} from "lucide-react";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  ResponsiveContainer, 
-  Cell
+import { mapToInternalEmotion } from "@/lib/utils";
+import { Loader2, Zap, HelpCircle, TrendingUp, Brain } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Cell,
 } from "recharts";
 import { useRouter } from "next/navigation";
 
@@ -33,6 +28,12 @@ const emotionColors: Record<string, string> = {
   surprise: "#98FB98",
   disgust: "#C0C0C0",
   neutral: "#98FB98",
+  Happy: "#FFD700",
+  Sad: "#6495ED",
+  Angry: "#FF6B6B",
+  Anxious: "#FFA07A",
+  Calm: "#90EE90",
+  Neutral: "#98FB98",
 };
 
 const emotionEmojis: Record<string, string> = {
@@ -43,6 +44,12 @@ const emotionEmojis: Record<string, string> = {
   surprise: "😲",
   disgust: "🤢",
   neutral: "😐",
+  Happy: "😊",
+  Sad: "😔",
+  Angry: "😠",
+  Anxious: "😰",
+  Calm: "😌",
+  Neutral: "😐",
 };
 
 export default function TextEmotionModule() {
@@ -55,12 +62,12 @@ export default function TextEmotionModule() {
 
   const handleAnalyze = async () => {
     if (!text.trim() || isAnalyzing) return;
-    
+
     setIsAnalyzing(true);
     try {
       const [hfResult, gravityResult] = await Promise.all([
         analyzeTextEmotion(text),
-        analyzeTextGravity(text)
+        analyzeTextGravity(text),
       ]);
 
       if (hfResult) {
@@ -68,15 +75,21 @@ export default function TextEmotionModule() {
         setGravityResults(gravityResult);
 
         // Find dominant emotion
-        const dominant = hfResult.reduce((prev: any, current: any) => 
-          prev.score > current.score ? prev : current
+        const dominant = hfResult.reduce((prev: any, current: any) =>
+          prev.score > current.score ? prev : current,
         );
 
+        // Map to internal emotion type (sadness -> Sad, etc.)
+        const internalEmotion = mapToInternalEmotion(dominant.label);
+
         const emotionProfile = {
-          dominantEmotion: dominant.label.charAt(0).toUpperCase() + dominant.label.slice(1),
+          dominantEmotion: internalEmotion,
           intensity: Math.round(dominant.score * 100),
           wellbeingIndex: gravityResult?.wellbeing_score || 70,
-          scores: hfResult.reduce((acc: any, curr: any) => ({ ...acc, [curr.label]: curr.score }), {}),
+          scores: hfResult.reduce((acc: any, curr: any) => {
+            const mapped = mapToInternalEmotion(curr.label);
+            return { ...acc, [mapped]: curr.score };
+          }, {}),
           timestamp: Date.now(),
         };
 
@@ -94,7 +107,7 @@ export default function TextEmotionModule() {
     "How are you feeling right now?",
     "What happened today?",
     "What's on your mind?",
-    "You can say anything here..."
+    "You can say anything here...",
   ];
 
   return (
@@ -103,7 +116,9 @@ export default function TextEmotionModule() {
       <PageWrapper>
         <header className="mb-10">
           <h1 className="text-4xl font-bold mb-2">Text Emotion Analysis</h1>
-          <p className="text-foreground/60">Share your thoughts and let ManoMitra understand your heart.</p>
+          <p className="text-foreground/60">
+            Share your thoughts and let ManoMitra understand your heart.
+          </p>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -118,7 +133,9 @@ export default function TextEmotionModule() {
               maxLength={2000}
             />
             <div className="mt-4 flex items-center justify-between">
-              <span className="text-sm text-foreground/40">{text.length} / 2000 characters</span>
+              <span className="text-sm text-foreground/40">
+                {text.length} / 2000 characters
+              </span>
               <button
                 onClick={handleAnalyze}
                 disabled={!text.trim() || isAnalyzing}
@@ -148,24 +165,30 @@ export default function TextEmotionModule() {
               >
                 <Card className="text-center p-8 bg-linear-to-br from-primary/10 to-secondary/10 border-white/10">
                   <div className="text-7xl mb-4">
-                    {emotionEmojis[results[0].label] || "😐"}
+                    {emotionEmojis[mapToInternalEmotion(results[0].label)] ||
+                      "😐"}
                   </div>
-                  <h3 className="text-3xl font-bold mb-2 capitalize">
-                    Feeling {results[0].label}
+                  <h3 className="text-3xl font-bold mb-2">
+                    Feeling {mapToInternalEmotion(results[0].label)}
                   </h3>
                   <p className="text-foreground/60 mb-6">
-                    ManoMitra is {Math.round(results[0].score * 100)}% confident in this analysis.
+                    ManoMitra is {Math.round(results[0].score * 100)}% confident
+                    in this analysis.
                   </p>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <p className="text-sm text-foreground/40 mb-1">Wellbeing Score</p>
+                      <p className="text-sm text-foreground/40 mb-1">
+                        Wellbeing Score
+                      </p>
                       <p className="text-2xl font-bold text-secondary">
                         {gravityResults?.wellbeing_score || 70}/100
                       </p>
                     </div>
                     <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                      <p className="text-sm text-foreground/40 mb-1">Intensity</p>
+                      <p className="text-sm text-foreground/40 mb-1">
+                        Intensity
+                      </p>
                       <p className="text-2xl font-bold text-primary">
                         {Math.round(results[0].score * 100)}%
                       </p>
@@ -180,22 +203,35 @@ export default function TextEmotionModule() {
                   </h4>
                   <div className="h-62.5 w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={results} layout="vertical">
+                      <BarChart
+                        data={results.map((r: any) => ({
+                          ...r,
+                          displayLabel: mapToInternalEmotion(r.label),
+                        }))}
+                        layout="vertical"
+                      >
                         <XAxis type="number" hide />
-                        <YAxis 
-                          dataKey="label" 
-                          type="category" 
-                          stroke="#ffffff60" 
-                          fontSize={12} 
+                        <YAxis
+                          dataKey="displayLabel"
+                          type="category"
+                          stroke="#ffffff60"
+                          fontSize={12}
                           width={80}
                         />
-                        <Bar 
-                          dataKey="score" 
-                          radius={[0, 8, 8, 0]} 
+                        <Bar
+                          dataKey="score"
+                          radius={[0, 8, 8, 0]}
                           animationDuration={1500}
                         >
                           {results.map((entry: any, index: number) => (
-                            <Cell key={`cell-${index}`} fill={emotionColors[entry.label] || "#6C63FF"} />
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={
+                                emotionColors[
+                                  mapToInternalEmotion(entry.label)
+                                ] || "#6C63FF"
+                              }
+                            />
                           ))}
                         </Bar>
                       </BarChart>
@@ -207,15 +243,19 @@ export default function TextEmotionModule() {
                   onClick={() => router.push("/mood-support")}
                   className="w-full py-4 bg-secondary text-white rounded-xl font-bold text-lg hover:bg-secondary/90 transition-all shadow-xl shadow-secondary/20 flex items-center justify-center gap-2"
                 >
-                  <Brain size={20} /> Based on your emotions → See Recommendations
+                  <Brain size={20} /> Based on your emotions → See
+                  Recommendations
                 </button>
               </motion.div>
             ) : (
               <Card className="flex flex-col items-center justify-center text-center p-12 border-dashed border-2 border-white/10 opacity-60">
                 <HelpCircle size={64} className="text-foreground/20 mb-4" />
-                <h3 className="text-xl font-bold text-foreground/40">Waiting for Analysis</h3>
+                <h3 className="text-xl font-bold text-foreground/40">
+                  Waiting for Analysis
+                </h3>
                 <p className="text-sm text-foreground/40 max-w-xs mt-2">
-                  Once you analyze your text, your emotion profile will appear here.
+                  Once you analyze your text, your emotion profile will appear
+                  here.
                 </p>
               </Card>
             )}

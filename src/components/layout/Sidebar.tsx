@@ -25,6 +25,9 @@ import {
   Menu,
   X,
   LogOut,
+  BarChart3,
+  BookOpen,
+  Wind,
 } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import { useAuth } from "@/hooks/useAuth";
@@ -52,6 +55,10 @@ const navItems = [
       { icon: Moon, label: "Sleep", href: "/fit-zone/sleep" },
     ],
   },
+  { icon: BookOpen, label: "Journaling", href: "/journaling" },
+  { icon: Wind, label: "Breathing", href: "/breathing" },
+  { icon: Activity, label: "Activity Log", href: "/activities" },
+  { icon: BarChart3, label: "Analytics", href: "/analytics" },
   { icon: MessageSquare, label: "Feedback", href: "/feedback" },
 ];
 
@@ -217,7 +224,9 @@ export default function Sidebar() {
               )}
             >
               {theme === "dark" ? <Sun size={24} /> : <Moon size={24} />}
-              {isOpen && <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>}
+              {isOpen && (
+                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
+              )}
             </button>
             <button
               className={cn(
@@ -237,7 +246,9 @@ export default function Sidebar() {
               )}
             >
               <LogOut size={24} />
-              {isOpen && <span>{showLogoutConfirm ? "Confirm Logout?" : "Logout"}</span>}
+              {isOpen && (
+                <span>{showLogoutConfirm ? "Confirm Logout?" : "Logout"}</span>
+              )}
             </button>
             {showLogoutConfirm && isOpen && (
               <div className="flex gap-2 px-3 pb-2">
