@@ -346,3 +346,131 @@ export function formatDuration(minutes: number): string {
   const mins = minutes % 60;
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
 }
+
+// Transcript Analysis Functions
+export interface TranscriptAnalysis {
+  wordCount: number;
+  characterCount: number;
+  sentenceCount: number;
+  averageWordsPerSentence: number;
+  emotionalKeywords: string[];
+  sentiment: "positive" | "negative" | "neutral";
+  speakingRate: number; // words per minute
+}
+
+export function analyzeTranscript(
+  transcript: string,
+  durationSeconds: number = 10,
+): TranscriptAnalysis {
+  const trimmed = transcript.trim();
+
+  // Basic metrics
+  const words = trimmed.split(/\s+/).filter((w) => w.length > 0);
+  const wordCount = words.length;
+  const characterCount = trimmed.length;
+  const sentences = trimmed.split(/[.!?]+/).filter((s) => s.trim().length > 0);
+  const sentenceCount = sentences.length;
+  const averageWordsPerSentence =
+    sentenceCount > 0 ? Math.round((wordCount / sentenceCount) * 10) / 10 : 0;
+
+  // Speaking rate
+  const durationMinutes = Math.max(durationSeconds / 60, 0.1);
+  const speakingRate = Math.round(wordCount / durationMinutes);
+
+  // Emotional keywords
+  const positiveKeywords = [
+    "happy",
+    "great",
+    "good",
+    "wonderful",
+    "excellent",
+    "amazing",
+    "love",
+    "excited",
+    "beautiful",
+    "perfect",
+    "fantastic",
+    "awesome",
+  ];
+  const negativeKeywords = [
+    "sad",
+    "bad",
+    "terrible",
+    "awful",
+    "hate",
+    "angry",
+    "frustrated",
+    "disappointed",
+    "worried",
+    "scared",
+    "unhappy",
+    "depressed",
+  ];
+
+  const lowerTranscript = trimmed.toLowerCase();
+  const emotionalKeywords = [
+    ...positiveKeywords.filter((kw) => lowerTranscript.includes(kw)),
+    ...negativeKeywords.filter((kw) => lowerTranscript.includes(kw)),
+  ];
+
+  // Sentiment analysis
+  let sentiment: "positive" | "negative" | "neutral" = "neutral";
+  const positiveCount = positiveKeywords.filter((kw) =>
+    lowerTranscript.includes(kw),
+  ).length;
+  const negativeCount = negativeKeywords.filter((kw) =>
+    lowerTranscript.includes(kw),
+  ).length;
+
+  if (positiveCount > negativeCount && positiveCount > 0) {
+    sentiment = "positive";
+  } else if (negativeCount > positiveCount && negativeCount > 0) {
+    sentiment = "negative";
+  }
+
+  return {
+    wordCount,
+    characterCount,
+    sentenceCount,
+    averageWordsPerSentence,
+    emotionalKeywords: [...new Set(emotionalKeywords)],
+    sentiment,
+    speakingRate,
+  };
+}
+
+export function getTranscriptInsights(analysis: TranscriptAnalysis): string[] {
+  const insights: string[] = [];
+
+  if (analysis.wordCount === 0) {
+    return ["No words detected in transcript"];
+  }
+
+  if (analysis.speakingRate < 100) {
+    insights.push(
+      "🐢 Speaking at a slower pace - possibly reflective or careful",
+    );
+  } else if (analysis.speakingRate > 160) {
+    insights.push("🚀 Speaking at a faster pace - possibly excited or anxious");
+  }
+
+  if (analysis.emotionalKeywords.length > 0) {
+    insights.push(
+      `😊 Emotional language detected: ${analysis.emotionalKeywords.slice(0, 2).join(", ")}`,
+    );
+  }
+
+  if (analysis.sentiment === "positive") {
+    insights.push("✨ Overall positive sentiment in your words");
+  } else if (analysis.sentiment === "negative") {
+    insights.push("💭 Some challenging emotions reflected in your speech");
+  }
+
+  if (analysis.averageWordsPerSentence > 15) {
+    insights.push("📝 Complex sentence structure - thoughtful and articulate");
+  } else if (analysis.averageWordsPerSentence < 8) {
+    insights.push("💬 Shorter sentences - direct and concise communication");
+  }
+
+  return insights;
+}

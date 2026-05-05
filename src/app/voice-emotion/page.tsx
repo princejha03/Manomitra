@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Sidebar from "@/components/layout/Sidebar";
 import PageWrapper from "@/components/layout/PageWrapper";
 import Card from "@/components/ui/Card";
+import VoiceDatasetInfo from "@/components/emotion/VoiceDatasetInfo";
 import { useStore } from "@/store/useStore";
 import { analyzeVoiceGravity } from "@/lib/gravityai";
 import {
@@ -17,11 +18,16 @@ import {
   TrendingUp,
   Volume2,
   FileText,
+  ChevronDown,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import VoiceRecorder from "@/components/emotion/VoiceRecorder";
-import { mapToInternalEmotion } from "@/lib/utils";
+import {
+  mapToInternalEmotion,
+  analyzeTranscript,
+  getTranscriptInsights,
+} from "@/lib/utils";
 
 export default function VoiceEmotionModule() {
   const [isRecording, setIsRecording] = useState(false);
@@ -38,6 +44,7 @@ export default function VoiceEmotionModule() {
   const [recordingStartTime, setRecordingStartTime] = useState<number | null>(
     null,
   );
+  const [showDatasetInfo, setShowDatasetInfo] = useState(false);
 
   const recognitionRef = useRef<any>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
@@ -383,11 +390,18 @@ export default function VoiceEmotionModule() {
           <p className="text-foreground/60">
             Speak freely for 10 seconds. Your tone carries your emotions.
           </p>
+          <div className="mt-4 p-4 bg-secondary/10 rounded-lg border border-secondary/20">
+            <p className="text-sm text-foreground/70">
+              <span className="font-semibold">📊 Model trained on:</span>{" "}
+              RAVDESS (1,440 samples) + TESS (2,800 samples) datasets with
+              180-dimensional audio features
+            </p>
+          </div>
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Recording Section */}
-          <Card className="flex flex-col items-center justify-center p-12 text-center min-h-[500px]">
+          <Card className="flex flex-col items-center justify-center p-12 text-center min-h-125">
             <div className="mb-8 space-y-4">
               <h3 className="text-xl font-bold">
                 "How was your day? Tell us anything."
@@ -424,20 +438,83 @@ export default function VoiceEmotionModule() {
             {!isRecording && (transcription || audioBlob) && (
               <div className="w-full mt-6 space-y-6">
                 {transcription ? (
-                  <Card className="bg-white/5 border-white/10 text-left p-4">
-                    <div className="flex items-center gap-2 text-xs text-foreground/40 mb-2">
-                      <FileText size={14} /> Transcription
-                    </div>
-                    <p className="text-sm italic">"{transcription.trim()}"</p>
-                  </Card>
+                  <div className="space-y-4">
+                    <Card className="bg-linear-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/30 text-left p-6">
+                      <div className="flex items-center gap-2 text-xs text-blue-300 font-semibold mb-3">
+                        <FileText size={16} /> LIVE TRANSCRIPT
+                      </div>
+                      <p className="text-base leading-relaxed italic text-foreground/90">
+                        "{transcription.trim()}"
+                      </p>
+                      <div className="mt-4 pt-4 border-t border-white/10 flex gap-6 text-xs">
+                        <div>
+                          <p className="text-foreground/50">Word Count</p>
+                          <p className="font-bold text-foreground">
+                            {transcription.trim().split(/\s+/).length}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-foreground/50">Character Length</p>
+                          <p className="font-bold text-foreground">
+                            {transcription.trim().length}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-foreground/50">Speaking Rate</p>
+                          <p className="font-bold text-foreground">
+                            {audioFeatures?.speechRate || 120} wpm
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+
+                    {audioFeatures && (
+                      <Card className="bg-white/5 border-white/10 text-left p-4">
+                        <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                          <TrendingUp size={14} className="text-primary" />{" "}
+                          Audio Metrics
+                        </h4>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="p-2 bg-white/5 rounded">
+                            <p className="text-foreground/50 mb-1">Duration</p>
+                            <p className="font-bold">
+                              {audioFeatures.duration.toFixed(1)}s
+                            </p>
+                          </div>
+                          <div className="p-2 bg-white/5 rounded">
+                            <p className="text-foreground/50 mb-1">Volume</p>
+                            <p className="font-bold">{audioFeatures.volume}%</p>
+                          </div>
+                          <div className="p-2 bg-white/5 rounded">
+                            <p className="text-foreground/50 mb-1">
+                              Pitch Est.
+                            </p>
+                            <p className="font-bold">
+                              {audioFeatures.pitch} Hz
+                            </p>
+                          </div>
+                          <div className="p-2 bg-white/5 rounded">
+                            <p className="text-foreground/50 mb-1">
+                              Sample Rate
+                            </p>
+                            <p className="font-bold">
+                              {(audioFeatures.sampleRate / 1000).toFixed(0)}kHz
+                            </p>
+                          </div>
+                        </div>
+                      </Card>
+                    )}
+                  </div>
                 ) : (
                   <Card className="bg-white/5 border-white/10 text-left p-4">
                     <div className="text-sm font-medium text-foreground/50 mb-2">
-                      Audio captured
+                      🔊 Audio Captured
                     </div>
                     <p className="text-sm text-foreground/60">
                       Your voice recording is ready for analysis. Speech
-                      transcription may not be supported in this browser.
+                      transcription may not be supported in this browser. The
+                      emotion analysis will still work based on acoustic
+                      features.
                     </p>
                   </Card>
                 )}
@@ -483,7 +560,7 @@ export default function VoiceEmotionModule() {
           <div className="space-y-6">
             {results ? (
               <>
-                <Card className="text-center p-8 bg-gradient-to-br from-primary/10 to-secondary/10 border-white/10">
+                <Card className="text-center p-8 bg-linear-to-br from-primary/10 to-secondary/10 border-white/10">
                   <div className="p-4 bg-primary/20 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4">
                     <Volume2 size={40} className="text-primary" />
                   </div>
@@ -510,6 +587,67 @@ export default function VoiceEmotionModule() {
                   </div>
                 </Card>
 
+                {transcription && (
+                  <Card className="bg-linear-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/30">
+                    <h4 className="font-bold mb-4 flex items-center gap-2">
+                      <FileText size={20} className="text-cyan-400" />
+                      Transcript Analysis
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="p-3 bg-white/5 rounded-lg">
+                        <p className="text-xs text-foreground/50 mb-1">
+                          Your words:
+                        </p>
+                        <p className="text-sm italic text-foreground/80">
+                          "{transcription.trim()}"
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div className="p-2 bg-white/5 rounded text-center">
+                          <p className="text-foreground/50">Words</p>
+                          <p className="font-bold text-cyan-300">
+                            {transcription.trim().split(/\s+/).length}
+                          </p>
+                        </div>
+                        <div className="p-2 bg-white/5 rounded text-center">
+                          <p className="text-foreground/50">Chars</p>
+                          <p className="font-bold text-cyan-300">
+                            {transcription.trim().length}
+                          </p>
+                        </div>
+                        <div className="p-2 bg-white/5 rounded text-center">
+                          <p className="text-foreground/50">Rate</p>
+                          <p className="font-bold text-cyan-300">
+                            {audioFeatures?.speechRate || 120} wpm
+                          </p>
+                        </div>
+                      </div>
+                      {audioFeatures && (
+                        <div className="mt-3 pt-3 border-t border-white/10">
+                          <p className="text-xs font-semibold text-cyan-300 mb-2">
+                            💡 Insights:
+                          </p>
+                          <div className="space-y-1">
+                            {getTranscriptInsights(
+                              analyzeTranscript(
+                                transcription.trim(),
+                                audioFeatures.duration,
+                              ),
+                            ).map((insight, idx) => (
+                              <p
+                                key={idx}
+                                className="text-xs text-foreground/70"
+                              >
+                                {insight}
+                              </p>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                )}
+
                 <Card>
                   <h4 className="font-bold mb-6 flex items-center gap-2">
                     <TrendingUp size={20} className="text-primary" />
@@ -534,6 +672,16 @@ export default function VoiceEmotionModule() {
                           </span>
                         ))}
                   </div>
+                </Card>
+
+                <Card className="bg-white/5 border-white/10 p-4 text-xs">
+                  <p className="text-foreground/60 mb-2">
+                    <span className="font-semibold">📊 Model Info:</span> This
+                    analysis uses a CNN trained on RAVDESS (1,440) and TESS
+                    (2,800) datasets, extracting MFCC, Chroma, and
+                    Mel-spectrogram features for comprehensive emotion
+                    detection.
+                  </p>
                 </Card>
 
                 <Card className="p-6 bg-white/5 border-white/10">
@@ -584,6 +732,30 @@ export default function VoiceEmotionModule() {
               </Card>
             )}
           </div>
+        </div>
+
+        {/* Dataset Information Section */}
+        <div className="mt-16">
+          <button
+            onClick={() => setShowDatasetInfo(!showDatasetInfo)}
+            className="w-full flex items-center justify-between p-6 bg-linear-to-r from-primary/10 to-secondary/10 rounded-xl border border-white/10 hover:border-white/20 transition-all"
+          >
+            <h2 className="text-2xl font-bold flex items-center gap-3">
+              📊 Model & Dataset Information
+            </h2>
+            <ChevronDown
+              size={24}
+              className={`transition-transform ${
+                showDatasetInfo ? "rotate-180" : ""
+              }`}
+            />
+          </button>
+
+          {showDatasetInfo && (
+            <div className="mt-6">
+              <VoiceDatasetInfo />
+            </div>
+          )}
         </div>
       </PageWrapper>
     </div>

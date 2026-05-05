@@ -34,8 +34,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { auth, isFirebaseConfigured } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 
-import { useTheme } from "next-themes";
-
 const navItems = [
   { icon: Home, label: "Dashboard", href: "/dashboard" },
   { icon: User, label: "Profile", href: "/profile" },
@@ -69,14 +67,12 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user: firebaseUser } = useAuth();
-  const { theme, setTheme } = useTheme();
   const { user, currentEmotion, streak, toggleDarkMode, isDarkMode } =
     useStore();
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
   const handleToggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
     toggleDarkMode();
   };
 
@@ -223,10 +219,8 @@ export default function Sidebar() {
                 !isOpen && "justify-center",
               )}
             >
-              {theme === "dark" ? <Sun size={24} /> : <Moon size={24} />}
-              {isOpen && (
-                <span>{theme === "dark" ? "Light Mode" : "Dark Mode"}</span>
-              )}
+              {isDarkMode ? <Sun size={24} /> : <Moon size={24} />}
+              {isOpen && <span>{isDarkMode ? "Light Mode" : "Dark Mode"}</span>}
             </button>
             <button
               className={cn(
